@@ -1,1 +1,2 @@
-Learning for my life
+Learning for my carrer
+Git tracks evrything
