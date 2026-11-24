@@ -27,26 +27,36 @@ pipeline {
                 '''
             }
         }
+	stage('SonarQube Analysis') {
+    steps {
+        script {
+            def scannerHome = tool 'SonarScanner'
 
-        stage('SonarQube Analysis') {
-            steps {
-                script {
-                    def scannerHome = tool 'SonarQubeScanner'
+            withSonarQubeEnv('sonarqube-local') {
 
-                    withSonarQubeEnv('sonarqube-local') {
+                sh """
+                    set -eu
 
-                        sh """
-                            "${scannerHome}/bin/sonar-scanner" \
-                              -Dsonar.projectKey=devops-project \
-                              -Dsonar.projectName=DevOps-Project \
-                              -Dsonar.sources=. \
-                              -Dsonar.sourceEncoding=UTF-8 \
-                              -Dsonar.exclusions=Jenkinsfile
-                        """
+                    test -n "\$SONAR_AUTH_TOKEN" || {
+                        echo "ERROR: Jenkins did not inject the SonarQube token."
+                        exit 1
                     }
-                }
+
+                    echo "SonarQube token is available. Value hidden."
+
+                    SONAR_TOKEN="\$SONAR_AUTH_TOKEN" \
+                    "${scannerHome}/bin/sonar-scanner" \
+                      -Dsonar.projectKey=devops-project \
+                      -Dsonar.projectName=DevOps-Project \
+                      -Dsonar.sources=. \
+                      -Dsonar.sourceEncoding=UTF-8 \
+                      -Dsonar.exclusions=Jenkinsfile
+                """
             }
         }
+    }
+}
+        
 
         stage('Quality Gate') {
             steps {
